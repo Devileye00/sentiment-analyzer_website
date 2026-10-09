@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review Sentiment Analyzer</title>
+<style>
+  :root {
+    --bg: #eef2f3; --ink: #1c2b33; --muted: #5d6e77; --panel: #ffffff;
+    --pos: #1f8a5b; --neg: #c0392b; --neu: #6b7b86; --line: #cfd8dc;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--ink); line-height: 1.6; }
+  main { max-width: 640px; margin: 0 auto; padding: 48px 20px; }
+  h1 { font-size: 2rem; margin: 0 0 8px; }
+  p.lead { color: var(--muted); margin: 0 0 28px; }
+  textarea { width: 100%; height: 150px; padding: 14px; font: 1rem/1.5 Georgia, serif; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); resize: vertical; }
+  textarea:focus, button:focus-visible { outline: 3px solid #2a6f97; outline-offset: 2px; }
+  button { margin-top: 14px; padding: 11px 22px; font: 600 1rem Georgia, serif; color: #fff; background: #1c2b33; border: 0; border-radius: 6px; cursor: pointer; }
+  button:hover { background: #2a6f97; }
+  #result { margin-top: 28px; padding: 20px; background: var(--panel); border-left: 8px solid var(--neu); border-radius: 4px; display: none; }
+  #result.show { display: block; }
+  #label { font-size: 1.8rem; font-weight: bold; margin: 0; }
+  #score { color: var(--muted); margin: 4px 0 0; }
+  .Positive { border-color: var(--pos) !important; } .Positive #label { color: var(--pos); }
+  .Negative { border-color: var(--neg) !important; } .Negative #label { color: var(--neg); }
+  .Neutral  { border-color: var(--neu) !important; } .Neutral #label { color: var(--neu); }
+  .error { color: var(--neg); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Review sentiment analyzer</h1>
+  <p class="lead">Paste a product or movie review and see whether it reads as positive, negative or neutral.</p>
+  <textarea id="review" placeholder="Type your review here..."></textarea>
+  <button id="go">Analyze review</button>
+  <div id="result" aria-live="polite">
+    <p id="label"></p>
+    <p id="score"></p>
+  </div>
+</main>
+<script>
+  const btn = document.getElementById("go");
+  const box = document.getElementById("result");
+  btn.addEventListener("click", async () => {
+    const review = document.getElementById("review").value;
+    const res = await fetch("/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ review })
+    });
+    const data = await res.json();
+    box.className = "show";
+    if (!res.ok) {
+      document.getElementById("label").innerHTML = '<span class="error">' + data.error + '</span>';
+      document.getElementById("score").textContent = "";
+      return;
+    }
+    box.className = "show " + data.sentiment;
+    document.getElementById("label").textContent = data.sentiment;
+    document.getElementById("score").textContent = "Polarity score: " + data.polarity + " (from -1 to +1)";
+  });
+</script>
+</body>
+</html>
