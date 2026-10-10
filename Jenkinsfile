@@ -1,9 +1,6 @@
+
 pipeline {
     agent any
-
-    environment {
-        VENV = "venv"
-    }
 
     stages {
         stage('Checkout') {
@@ -12,35 +9,34 @@ pipeline {
             }
         }
 
+        stage('Check Tools') {
+            steps {
+                bat 'python --version'
+                bat 'git --version'
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    python3 -m venv $VENV
-                    . $VENV/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
+                bat 'python -m venv .venv'
+                bat '.venv\\Scripts\\python.exe -m pip install --upgrade pip'
+                bat '.venv\\Scripts\\python.exe -m pip install -r requirements.txt'
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                sh '''
-                    . $VENV/bin/activate
-                    pytest -v
-                '''
-            }
-        }
-
-        stage('Deploy with Ansible') {
-            steps {
-                sh 'ansible-playbook -i inventory.ini deploy.yml'
+                bat '.venv\\Scripts\\python.exe -m pytest -v'
             }
         }
     }
 
     post {
-        success { echo 'Pipeline finished: app deployed on port 5000.' }
-        failure { echo 'Pipeline failed. Check the console output.' }
+        success {
+            echo 'Sentiment Analyzer: build and tests passed!'
+        }
+        failure {
+            echo 'Pipeline failed. Check the Console Output.'
+        }
     }
 }
