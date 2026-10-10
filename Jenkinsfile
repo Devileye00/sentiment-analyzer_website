@@ -11,8 +11,9 @@ pipeline {
 
         stage('Check Tools') {
             steps {
-                bat 'python --version'
-                bat 'git --version'
+                bat 'echo PATH=%PATH%'
+                bat 'where.exe python'
+                bat 'where.exe py'
             }
         }
 
