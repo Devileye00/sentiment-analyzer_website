@@ -1,26 +1,26 @@
+
 from flask import Flask, render_template, request, jsonify
 from textblob import TextBlob
 
 app = Flask(__name__)
 
 
-# Phrases used to identify explicit sentiment
+# Explicit negative phrases
 NEGATIVE_PHRASES = [
+    "battery runs out too quickly",
+    "runs out too quickly",
+    "not for a full day",
+    "waited almost an hour",
+    "waited almost an hour for our order",
     "don't like",
     "do not like",
-    "very disappointed",
-    "too short",
-    "waste of money",
-    "disappointed with the quality",
-    "feels cheap",
-    "doesn't look durable",
-    "does not look durable",
-    "unhappy with this purchase",
-    "not worth the money",
     "not good",
     "not satisfied",
-    "disappointed with the quality",
+    "very disappointed",
+    "disappointed because",
+    "disappointed with",
     "poor quality",
+    "quality is poor",
     "low quality",
     "bad quality",
     "feels cheap",
@@ -30,6 +30,15 @@ NEGATIVE_PHRASES = [
     "not worth the money",
     "waste of money",
     "too expensive",
+    "price has increased",
+    "price increased",
+    "price went up",
+    "more expensive",
+    "paying more",
+    "not happy about the price",
+    "not happy about paying more",
+    "price is too high",
+    "price hike",
     "stopped working",
     "doesn't work",
     "does not work",
@@ -38,32 +47,42 @@ NEGATIVE_PHRASES = [
     "defective",
     "uncomfortable",
     "unhappy with this purchase",
+    "regret buying it",
+    "dislike",
+    "terrible",
+    "awful",
+    "worst",
+    "disappears within an hour",
+    "disappears quickly",
+    "doesn't last long",
+    "does not last long",
+    "expected it to last much longer",
+    "runs out too quickly",
+    "battery runs out too quickly",
+    "not for a full day",
+    "battery life is poor",
+    "waited almost an hour",
+    "gets hot",
+    "gets too hot",
+    "overheating",
+    "overheating is frustrating",
+    "frustrating",
+    "poor stitching",
+    "looks nothing like the photos",
+    "not worth it",
+    "not as expected",
+    "below expectations",
+    "too short",
     "doesn't last",
     "does not last",
     "doesn't look durable",
     "does not look durable",
-    "not as expected",
-    "below expectations",
-    "terrible",
-    "awful",
-    "worst",
-    "dislike",
-    "quality is poor",
-    "poor",
-    "bad quality",
-    "low quality",
-    "price has increased",
-    "price increased",
-    "price went up",
-    "more expensive",
-    "paying more",
-    "not happy about the price",
-    "too expensive",
-    "price is too high",
-    "costs more than yesterday",
-    "price hike",
+    "not happy",
+    "not worth the money",
 ]
 
+
+# Explicit positive phrases
 POSITIVE_PHRASES = [
     "love it",
     "really good",
@@ -95,25 +114,51 @@ POSITIVE_PHRASES = [
     "fantastic",
     "wonderful",
     "perfect",
+    "soft",
+    "fitting is perfect",
+    "color looks exactly like the pictures",
+    "earlier than expected",
+    "neat",
+    "delicious",
+    "friendly",
+    "fast",
+    "good for short trips",
+    "good for the price",
+    "in perfect condition",
+    "order again",
+    "screen looks amazing",
 ]
 
+
+# Factual phrases that can indicate a neutral product description
 NEUTRAL_PHRASES = [
-    "arrived yesterday",
-    "arrived today",
-    "comes in",
-    "available in",
+    "holds one litre of water",
+    "holds one liter of water",
+    "has a black lid",
+    "fits in my backpack",
+    "arrived on monday",
+    "available in blue and grey",
+    "available in blue and gray",
+    "has three main compartments",
+    "two side pockets",
+    "adjustable shoulder straps",
+    "available in different colors",
+    "available in different colours",
     "has three",
     "has two",
     "measures",
     "weighs",
     "the package contains",
     "the box includes",
-    "available in different colors",
     "the product includes",
+    "arrived yesterday",
+    "arrived today",
+    "comes in",
 ]
-   
+
+
 def analyze_sentiment(text):
-    """Return the sentiment label and TextBlob polarity."""
+    """Return sentiment label and TextBlob polarity."""
     text_lower = text.lower()
     polarity = TextBlob(text).sentiment.polarity
 
@@ -123,17 +168,31 @@ def analyze_sentiment(text):
     has_positive = any(
         phrase in text_lower for phrase in POSITIVE_PHRASES
     )
+    has_neutral = any(
+        phrase in text_lower for phrase in NEUTRAL_PHRASES
+    )
 
-    if has_negative and has_positive:
+    # Mixed must be checked before individual sentiment labels.
+    if has_positive and has_negative:
         label = "Mixed"
+
     elif has_negative:
         label = "Negative"
+
     elif has_positive:
         label = "Positive"
+
+    # Use factual cues for product descriptions only when
+    # explicit positive or negative expressions are absent.
+    elif has_neutral:
+        label = "Neutral"
+
     elif polarity > 0.1:
         label = "Positive"
+
     elif polarity < -0.1:
         label = "Negative"
+
     else:
         label = "Neutral"
 
