@@ -52,6 +52,16 @@ NEGATIVE_PHRASES = [
     "poor",
     "bad quality",
     "low quality",
+    "price has increased",
+    "price increased",
+    "price went up",
+    "more expensive",
+    "paying more",
+    "not happy about the price",
+    "too expensive",
+    "price is too high",
+    "costs more than yesterday",
+    "price hike",
 ]
 
 POSITIVE_PHRASES = [
